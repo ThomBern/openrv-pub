@@ -97,12 +97,33 @@ FILE(GLOB _galliumDriversLlvmPipeC gallium/drivers/llvmpipe/*.c)
 
 set(_llvmPipeC ${_galliumDriversLlvmPipeC})
 
-#message(${_llvmPipeC})
+# Mesa Gallium CXX Files
+
+FILE(GLOB _mesaProgramCxx mesa/program/*.cpp)
+FILE(GLOB _mesaMainCxx mesa/main/*.cpp)
+FILE(GLOB _mesaStateTrackerCxx mesa/state_tracker/*.cpp)
+FILE(GLOB _glslCxx glsl/*.cpp))
+
+set(_libMesaGalliumCxx
+  ${_mesaProgramCxx}
+  ${_mesaMainCxx}
+  ${_mesaStateTrackerCxx}
+  ${_glslCxx}  
+)
+
+# Gallium CXX Files
+
+FILE(GLOB _galliumAuxGallivmCxx gallium/auxiliary/gallivm/*.cpp)
+
+set(_libGalliumCxx ${_galliumAuxGallivmCxx})
+
+message(${_libGalliumCxx})
 
 LIST(
   APPEND
   _sources
-  #mesa/main/mm.c
+
+  # C libraries
   ${_libMesaGalliumC}
   ${_libGalliumC}
   ${_libTraceC}
@@ -111,6 +132,10 @@ LIST(
   ${_libGlApi}
   ${_llvmPipeC}
   gallium/targets/osmesa/target.c
+
+  # CXX libraries
+  ${_libMesaGalliumCxx}
+  ${_libGalliumCxx}
 )
 
 ADD_LIBRARY(
@@ -125,6 +150,17 @@ TARGET_INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}/mesa
   ${CMAKE_CURRENT_SOURCE_DIR}/mapi
 )
+
+IF(RV_TARGET_LINUX)
+  SET(THREADS_PREFER_PTHREAD_FLAG
+      TRUE
+  )
+  FIND_PACKAGE(Threads REQUIRED)
+  TARGET_LINK_LIBRARIES(
+    ${_target}
+    PUBLIC Threads::Threads rt dl m c
+  )
+ENDIF()
 
 RV_STAGE(TYPE "LIBRARY" TARGET ${_target})
 
