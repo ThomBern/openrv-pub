@@ -1,0 +1,253 @@
+#  -*- mode: makefile -*-
+# 
+#  Copyright (c) 2013 Tweak Software.
+#  All rights reserved. 
+# 
+
+LICENSE	= BSD
+VERSION	= 10.1.1
+
+
+IPATH += . include mapi mesa mapi/glapi glsl glsl/glcpp \
+           gallium/include gallium/include/pipe gallium/auxiliary \
+           gallium/state_trackers/egl \
+	   gallium/winsys/sw \
+	   gallium/winsys/ \
+	   gallium/drivers \
+           egl/main 
+
+IPATH_WINDOWS += ./include/c99
+
+
+DEFS_LINUX    =					\
+	PACKAGE_NAME="Mesa"			\
+	PACKAGE_TARNAME="mesa"			\
+	PACKAGE_VERSION=\"10.1.1\"		\
+	PACKAGE_STRING="Mesa 10.1.1"		\
+	PACKAGE="mesa"				\
+	PACKAGE_BUGREPORT=\"http\"		\
+	VERSION="10.1.1"			\
+	DEBUG					\
+	STDC_HEADERS=1				\
+	HAVE_SYS_TYPES_H=1			\
+	HAVE_SYS_STAT_H=1			\
+	HAVE_STDLIB_H=1				\
+	HAVE_STRING_H=1				\
+	HAVE_MEMORY_H=1				\
+	HAVE_STRINGS_H=1			\
+	HAVE_INTTYPES_H=1			\
+	HAVE_STDINT_H=1				\
+	HAVE_UNISTD_H=1				\
+	HAVE_DLFCN_H=1				\
+	YYTEXT_POINTER=1			\
+	HAVE_PTHREAD=1				\
+	_GNU_SOURCE				\
+	TEXTURE_FLOAT_ENABLED			\
+	HAVE_DLOPEN=1				\
+	HAVE_POSIX_MEMALIGN=1			\
+	HAVE_MINCORE=1				\
+	HAVE_LLVM=$(LLVM_VERSION_LINUX)		\
+	MAPI_MODE_UTIL=1			\
+	__STDC_LIMIT_MACROS			\
+	__STDC_CONSTANT_MACROS			\
+	HAVE_NULL_BACKEND=1			\
+	_EGL_MAIN=_eglMain			\
+        _EGL_EXTERNAL_GL=1                      \
+        _EGL_NATIVE_PLATFORM=_EGL_PLATFORM_NULL \
+	GALLIUM_LLVMPIPE=1			\
+	GALLIUM_SOFTPIPE=1			\
+	GALLIUM_TRACE=1				\
+	FEATURE_GL=1
+
+DEFS_DARWIN    =					\
+	PACKAGE_NAME="Mesa"			\
+	PACKAGE_TARNAME="mesa"			\
+	PACKAGE_VERSION=\"10.1.1\"		\
+	PACKAGE_STRING="Mesa 10.1.1"		\
+	PACKAGE="mesa"				\
+	PACKAGE_BUGREPORT=\"http\"		\
+	VERSION="10.1.1"			\
+	DEBUG					\
+	STDC_HEADERS=1				\
+	HAVE_SYS_TYPES_H=1			\
+	HAVE_SYS_STAT_H=1			\
+	HAVE_STDLIB_H=1				\
+	HAVE_STRING_H=1				\
+	HAVE_MEMORY_H=1				\
+	HAVE_STRINGS_H=1			\
+	HAVE_INTTYPES_H=1			\
+	HAVE_STDINT_H=1				\
+	HAVE_UNISTD_H=1				\
+	HAVE_DLFCN_H=1				\
+	YYTEXT_POINTER=1			\
+	HAVE_PTHREAD=1				\
+	_GNU_SOURCE				\
+	TEXTURE_FLOAT_ENABLED			\
+	HAVE_DLOPEN=1				\
+	HAVE_POSIX_MEMALIGN=1			\
+	HAVE_MINCORE=1				\
+	HAVE_LLVM=$(LLVM_VERSION_DARWIN)	\
+	MAPI_MODE_UTIL=1			\
+	__STDC_LIMIT_MACROS			\
+	__STDC_CONSTANT_MACROS			\
+	HAVE_NULL_BACKEND=1			\
+	_EGL_MAIN=_eglMain			\
+        _EGL_EXTERNAL_GL=1                      \
+        _EGL_NATIVE_PLATFORM=_EGL_PLATFORM_NULL \
+	GALLIUM_LLVMPIPE=1			\
+	GALLIUM_SOFTPIPE=1			\
+	GALLIUM_TRACE=1				\
+	FEATURE_GL=1
+
+DEFS_WINDOWS 	=				\
+	PACKAGE_NAME="Mesa"			\
+	PACKAGE_TARNAME="mesa"			\
+	PACKAGE_VERSION=\"10.1.1\"		\
+	PACKAGE_STRING="Mesa 10.1.1"		\
+	PACKAGE="mesa"				\
+	PACKAGE_BUGREPORT=\"http\"		\
+	VERSION="10.1.1"			\
+	STDC_HEADERS=1				\
+        PLATFORM_WINDOWS                        \
+	HAVE_SYS_TYPES_H=1			\
+	HAVE_SYS_STAT_H=1			\
+	HAVE_STDLIB_H=1				\
+	HAVE_STRING_H=1				\
+	HAVE_MEMORY_H=1				\
+	HAVE_STRINGS_H=1			\
+	HAVE_INTTYPES_H=1			\
+	HAVE_STDINT_H=1				\
+	HAVE_DLFCN_H=1				\
+	YYTEXT_POINTER=1			\
+	TEXTURE_FLOAT_ENABLED			\
+	HAVE_DLOPEN=1				\
+	HAVE_MINCORE=1				\
+	HAVE_LLVM=$(LLVM_VERSION_WINDOWS)	\
+	MAPI_MODE_UTIL=1			\
+	__STDC_LIMIT_MACROS			\
+	__STDC_CONSTANT_MACROS			\
+	HAVE_NULL_BACKEND=1			\
+	_EGL_MAIN=_eglMain			\
+        _EGL_EXTERNAL_GL=1                      \
+        _EGL_NATIVE_PLATFORM=_EGL_PLATFORM_NULL \
+	GALLIUM_LLVMPIPE=1			\
+	GALLIUM_SOFTPIPE=1			\
+	GALLIUM_TRACE=1				\
+	FEATURE_GL=1                            \
+	_GLAPI_NO_EXPORTS
+
+
+#
+# Need to figure out how to get this back in DEFINES
+#
+#	USE_X86_64_ASM				\
+#
+# having relocation problems when using it
+#
+
+SSUFFIX := .S
+
+CFLAGS        += $(addprefix -D,$(call vargroup,DEFS))
+CXXFLAGS      += $(addprefix -D,$(call vargroup,DEFS))
+
+CFLAGS_GCC4   += -fPIC -DPIC
+CXXFLAGS_GCC4 += -fPIC -DPIC
+SFLAGS_GCC4   += -fPIC -DPIC
+#LDFLAGS_GCC4  += -Wl,--no-undefined -Wl,--allow-multiple-definition -fPIC -DPIC 
+LDFLAGS_GCC4  += -Wl,--no-undefined 
+
+CFLAGS_GCC44   += -fPIC -DPIC
+CXXFLAGS_GCC44 += -fPIC -DPIC
+SFLAGS_GCC44   += -fPIC -DPIC
+LDFLAGS_GCC44  += -Wl,--no-undefined 
+
+#----------------------------------------------------------------------
+# all files in individual directories
+
+filepat = $(basename $(wildcard $(1))) 
+
+MESA_MATH_CFILES	    = $(call filepat,mesa/math/*.c)
+MESA_PROGRAM_CFILES	    = $(call filepat,mesa/program/*.c)
+MESA_PROGRAM_CXXFILES	    = $(call filepat,mesa/program/*.cpp)
+MESA_MAIN_CFILES	    = $(call filepat,mesa/main/*.c)
+MESA_MAIN_CXXFILES	    = $(call filepat,mesa/main/*.cpp) 
+MESA_VBO_CFILES		    = $(call filepat,mesa/vbo/*.c)
+MESA_TNL_CFILES		    = $(call filepat,mesa/tnl/*.c)
+MESA_SWRAST_CFILES	    = $(call filepat,mesa/swrast/*.c)
+MESA_SWRAST_SETUP_CFILES    = $(call filepat,mesa/swrast_setup/*.c)
+MESA_DRIVERS_COMMON_CFILES  = $(call filepat,mesa/drivers/common/*.c)
+MESA_X86_CFILES		    = $(call filepat,mesa/x86/*.c)
+MESA_SPARC_XFILES	    = $(call filepat,mesa/sparc/*.c)
+MESA_X86_64_CFILES	    = $(call filepat,mesa/x86-64/*.c)
+MESA_STATE_TRACKER_CFILES   = $(call filepat,mesa/state_tracker/*.c)
+MESA_DRIVERS_OSMESA_CFILES  = $(call filepat,mesa/drivers/osmesa/*.c)
+MESA_STATE_TRACKER_CFILES   = $(call filepat,mesa/state_tracker/*.c)
+MESA_STATE_TRACKER_CXXFILES = $(call filepat,mesa/state_tracker/*.cpp)
+GLSL_CFILES		    = $(call filepat,glsl/*.c)
+GLSL_CXXFILES		    = $(call filepat,glsl/*.cpp)
+GLSL_GLCPP_CFILES	    = $(call filepat,glsl/glcpp/*.c)
+MAPI_GLAPI_CFILES	    = $(call filepat,mapi/glapi/*.c) \
+			      $(call filepat,mapi/u_*.c) 
+MAPI_GLAPI_SFILES	    = $(call filepat,mapi/glapi/*.S)
+
+# why doesn't gallium/auxiliary/*/*.c work for the pattern?
+GALLIUM_AUXILLARY_CFILES    = $(call filepat,gallium/auxiliary/cso_cache/*.c)	\
+			      $(call filepat,gallium/auxiliary/draw/*.c)	\
+			      $(call filepat,gallium/auxiliary/gallivm/*.c)	\
+			      $(call filepat,gallium/auxiliary/indices/*.c)	\
+			      $(call filepat,gallium/auxiliary/os/*.c)		\
+			      $(call filepat,gallium/auxiliary/pipebuffer/*.c)	\
+			      $(call filepat,gallium/auxiliary/postprocess/*.c)	\
+			      $(call filepat,gallium/auxiliary/rbug/*.c)	\
+			      $(call filepat,gallium/auxiliary/tgsi/*.c)	\
+			      $(call filepat,gallium/auxiliary/translate/*.c)	\
+			      $(call filepat,gallium/auxiliary/util/*.c)	\
+			      $(call filepat,gallium/auxiliary/rtasm/*.c)	\
+			      $(call filepat,gallium/auxiliary/vl/*.c)
+
+GALLIUM_AUXILLARY_CXXFILES  = $(call filepat,gallium/auxiliary/gallivm/*.cpp)	
+
+GALLIUM_WINSYS_SW_NULL_CFILES	= $(call filepat,gallium/winsys/sw/null/*.c)
+GALLIUM_WINSYS_WRAPPER_CFILES	= $(call filepat,gallium/winsys/wrapper/*.c)
+GALLIUM_DRIVERS_TRACE_CFILES	= $(call filepat,gallium/drivers/trace/*.c)
+GALLIUM_DRIVERS_SOFTPIPE_CFILES = $(call filepat,gallium/drivers/softpipe/*.c)
+GALLIUM_DRIVERS_LLVMPIPE_CFILES = $(call filepat,gallium/drivers/llvmpipe/*.c)
+GALLIUM_DRIVERS_IDENTITY_CFILES = $(call filepat,gallium/drivers/identity/*.c)
+GALLIUM_DRIVERS_RBUG_CFILES     = $(call filepat,gallium/drivers/rbug/*.c)
+
+GALLIUM_STATE_TRACKERS_OSMESA_CFILES = $(call filepat,gallium/state_trackers/osmesa/*.c)
+GALLIUM_STATE_TRACKERS_EGL_CFILES    = $(call filepat,gallium/state_trackers/egl/common/*.c) \
+				       $(call filepat,gallium/state_trackers/egl/null/*.c)
+
+GALLIUM_TARGETS_EGL_STATIC = $(call filepat,gallium/targets/egl-static/*.c)
+
+#----------------------------------------------------------------------
+# libs (.a) from mesa's build system (not ours). These will all be thrown
+# into the same CFILES below
+#
+
+LIBIDENTITY_CFILES          = $(GALLIUM_DRIVERS_IDENTITY_CFILES)
+LIBMESAGALLIUM_CFILES	    = $(MESA_MAIN_CFILES)		\
+			      $(MESA_PROGRAM_CFILES)		\
+			      $(MESA_VBO_CFILES)		\
+			      $(MESA_MATH_CFILES)		\
+			      $(MESA_X86_64_CFILES)		\
+			      $(GLSL_CFILES)			\
+			      $(MESA_STATE_TRACKER_CFILES)	\
+			      $(GLSL_GLCPP_CFILES)
+LIBMESAGALLIUM_CXXFILES     = $(MESA_PROGRAM_CXXFILES)		\
+			      $(MESA_MAIN_CXXFILES)		\
+			      $(MESA_STATE_TRACKER_CXXFILES)	\
+                              $(GLSL_CXXFILES)
+LIBGALLIUM_CFILES           = $(GALLIUM_AUXILLARY_CFILES)
+LIBGALLIUM_CXXFILES         = $(GALLIUM_AUXILLARY_CXXFILES)
+LIBWS_NULL_CFILES           = $(GALLIUM_WINSYS_SW_NULL_CFILES)
+LIBTRACE_CFILES             = $(GALLIUM_DRIVERS_TRACE_CFILES)
+LIBSOFTPIPE_CFILES          = $(GALLIUM_DRIVERS_SOFTPIPE_CFILES)
+LIBOSMESA_CFILES            = $(GALLIUM_STATE_TRACKERS_OSMESA_CFILES)
+LIBLLVMPIPE_CFILES          = $(GALLIUM_DRIVERS_LLVMPIPE_CFILES)
+LIBGLAPI_CFILES             = $(MAPI_GLAPI_CFILES)
+LIBGLAPI_SFILES             = $(MAPI_GLAPI_SFILES)
+LIBEGL_CFILES		    = $(GALLIUM_STATE_TRACKERS_EGL_CFILES)
+LIBRBUG_CFILES              = $(GALLIUM_DRIVERS_RBUG_CFILES)
+

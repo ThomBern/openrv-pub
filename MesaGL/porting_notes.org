@@ -1,0 +1,311 @@
+#+TITLE:     Mesa 9.X Porting Notes
+#+AUTHOR:    Jim Hourihan
+#+EMAIL:     jimh@tweaksoftware.com
+#+DATE:      <2013-04-16 Tue>
+#+OPTIONS:   ^:{} H:0 num:t toc:nil \n:nil @:t ::t |:t ^:{} -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
+
+* README
+
+Mesa is changing very fast. There's a lot of development going from
+multiple groups including big companies like Intel. The 9.X branches are
+the ones we want. It has GL 3.1 and a working llvm-pipe which is how mesa
+can do multithreaded rendering using LLVM as a JIT compiler for GLSL
+shaders. Mesa developers do all new development in master and branch on
+release so e.g. 9.1 branch is the released 9.1.
+
+LLVM's API is a moving target. We'd ideally like to target LLVM 3.3, and I
+think the latest changes to mesa support it. As long as you get the LLVM
+version into the DEFINES properly it will work with any of them starting
+with LLVM 2.9.
+
+The source code in our tree is laid out just like the original code. So it
+should be possible to make a script to automatically update it. See the
+section on MESA IN OUR SOURCE TREE.
+
+** What we're building
+
+At first the only software only option was EGL using the gallium "null"
+platform and the llvm-pipe driver. However, as of Mesa 9.2 they have
+updated OSMesa so that it can be the interface to the gallium drivers.
+
+To be clear, these are all operating system (or window system) interfaces
+to Mesa's GL, GLES, or CL renderers:
+
+  - glx (X-Windows)
+  - egl (mobile devices)
+  - osmesa (software only)
+  - wgl (Windows)
+
+typically, you choose one of them to use (and probably to compile mesa
+with). OSMesa allows you to make a native frame buffer (analogous to
+a glx opengl x-window surface) in main memory. So when you render to
+that native frame buffer you end up with a picture in memory which you
+can access directly from C code. That's the ideal interface for a software
+only GL renderer.
+
+In RV 3, rvio used OSMesa's previous software renderer which still exists
+but can only handle up to GL 2.0. Mesa development on that code stopped a
+while ago. Since then they have added the gallium driver arch which allows
+a more modular approach to the back ends (they are seperate from the front
+ends like egl or glx). 
+
+One of the gallium drivers is llvm-pipe which JIT compiles the GL pipeline
+into native code on the fly (including the rasterizers not just the
+shaders). Unlike the old OSMesa software renderer, the llvm-pipe code is
+threaded at a fine grained level. So when using it there isn't much
+advantage to spawning multiple instances of the renderer -- just use is as
+if it were an actual GPU.
+
+The new OSMesa uses gallium as its renderer so successfully compiling the
+gallium llvm-pipe driver results in an OSMesa that uses llvm-pipe. That's
+the goal.
+
+* DEPENDENCIES
+
+So far:
+
+    - llvm 3.3
+
+* CONFIGURE
+** Autotools
+
+You have to call ./autogen.sh with the configure commands (see
+[[OSMesa][OSMesa method]] for the actual options to use).
+
+If you've already tried building you should do: 
+
+#+BEGIN_EXAMPLE
+  $ git clean -fdX
+#+END_EXAMPLE
+
+The git command is there to clean up some cruft left by autotools that can
+screw up the compile.
+
+To see compiler output: 
+
+#+BEGIN_EXAMPLE
+  $ make V=1
+#+END_EXAMPLE
+
+The autotools usage in mesa is complicated. There are many small libraries
+created which are then combined using --whole-archive (etc) into larger
+libraries. In some cases its extremely hard to follow what's being included
+by what because .o files are deposited in non-local directories. Did I say
+I hate autotools yet? If not I hate autotools.
+
+*NOTE*: the mesa configure is extremely sensitive to system
+ requirements. They seem to break it and then fix it on a regular basis. I
+ happened to catch it at a time when it was working. So it may be the case
+ that you need to build at a non-tagged commit.
+
+*UPDATE*: the above note should still be considered valid, but they've made
+ it much better in 9.2.
+
+** OSMesa method
+
+To configure for OSMesa:
+
+#+BEGIN_EXAMPLE
+
+  $ git clean -fdX
+  $ ./autogen.sh --enable-osmesa 
+                 --disable-driglx-direct 
+                 --disable-dri 
+                 --with-gallium-drivers=swrast 
+                 --disable-egl
+
+#+END_EXAMPLE
+   
+This results in the following configure output on linux (using llvm 2.9
+installed in /usr/local):
+
+#+BEGIN_EXAMPLE
+        prefix:          /usr/local
+        exec_prefix:     ${prefix}
+        libdir:          ${exec_prefix}/lib
+        includedir:      ${prefix}/include
+
+        OpenGL:          yes (ES1: no ES2: no)
+        OpenVG:          no
+
+        OSMesa:          libOSMesa
+        GLX:             no
+
+        EGL:             no
+
+        llvm:            yes
+        llvm-config:     /usr/bin/llvm-config
+        llvm-version:    2.9
+
+        Gallium:         yes
+        Target dirs:     osmesa 
+        Winsys dirs:     sw 
+        Driver dirs:     galahad identity llvmpipe noop rbug softpipe trace 
+        Trackers dirs:   osmesa 
+
+        Shared libs:     yes
+        Static libs:     no
+        Shared-glapi:    no
+
+        CFLAGS:          -g -O2 -Wall -std=c99 -Werror=implicit-function-declaration -Werror=missing-prototypes -fno-strict-aliasing -fno-builtin-memcmp
+        CXXFLAGS:        -g -O2 -Wall -fno-strict-aliasing -fno-builtin-memcmp
+        Macros:          -D_GNU_SOURCE -DHAVE_PTHREAD -DUSE_X86_64_ASM -DHAVE_DLOPEN -DHAVE_POSIX_MEMALIGN -DHAVE_LLVM=0x0209
+
+        LLVM_CFLAGS:     -I/usr/lib/llvm-2.9/include  -D_GNU_SOURCE -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
+        LLVM_CXXFLAGS:   -I/usr/lib/llvm-2.9/include  -D_GNU_SOURCE -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS    -fno-exceptions -fPIC -Woverloaded-virtual -Wcast-qual
+        LLVM_CPPFLAGS:   -I/usr/lib/llvm-2.9/include  -D_GNU_SOURCE -D_
+#+END_EXAMPLE
+
+In this case we only need one library: libOSMesa. In the EGL case we need
+four: libOSMesa, libEGL, egl_gallium.so, st_GL.so.
+** EGL method (not needed anymore)
+*** Configuring for EGL (not needed anymore)
+
+this seems to work:
+
+#+BEGIN_EXAMPLE
+
+  $ git clean -fdX
+  $ ./configure --disable-dri 
+                --enable-gallium-egl 
+                --with-gallium-drivers=swrast 
+                --with-egl-platforms=null 
+                --prefix=/usr/local 
+                --enable-texture-float 
+                --enable-debug
+                --enable-osmesa
+
+#+END_EXAMPLE
+
+or ./autogen.sh with same args
+it may be possible to remove --enable-osmesa 
+it might be better to turn off debug (--enable-debug)
+
+*** Usage in mesa tree (not needed anymore)
+
+There's an example in $SRC_ROOT/bin/misc/egltest. This assumes that you
+installed Mesa from its build system into /usr/local. egltest will render
+something and write it out as an exr. 
+
+use "null" platform with EGL_DEFAULT_DISPLAY (see egltest.c)
+render to FBO with color texture attachment. A renderbuffer will *not*
+work; I don't think they have it implemented yet.
+
+After rendering us glReadPixels() on the FBO to get the pixels back. Its
+not ideal (the pixels are clearly in memory somewhere already) but it does
+result in a code path that's identical to the hardware-only path.
+
+* MESA IN OUR SOURCE TREE
+** Libraries
+I've cut it up into four libs:
+
+| Their lib      | our project | required for   |
+|----------------+-------------+----------------|
+| libOSMesa.so   | MesaGL      | EGL and OSMesa |
+| libEGL.so      | MesaEGL     | EGL only       |
+| egl_gallium.so | egl_gallium | EGL only       |
+| st_GL.so       | st_GL       | EGL only       |
+
+All of the source code lives in MesaGL. The other three projects point into
+MesaGL via symbolic links. Not sure how that's going to work on windows but
+its a start.
+
+To keep things simple in the Makefiles, they're using $(wildcard ...) to
+scarf the files right off the filesystem instead of enumerating them in
+Makefile. 
+
+There are a couple of cases where a source file needs to be in the tree but
+we don't want to build it. These are handled by appending .notincluded to
+their file names to prevent $(wildcard) from compiling them. 
+
+You have to build dynamic objects for *all* four of the libraries and
+plugins even on linux. Otherwise you get multiple copies of per-thread
+data.
+
+*NOTE* in the OSMesa only case we only need MesaGL not the others.
+** Generated .c files that are #included
+
+Files generated by mesa's build system are checked into ours. We don't
+try to generate them. Because of this there are a couple of files
+which have to be edited to make the compile work. Right now these are: 
+
+  * u_indices_gen.c
+  * u_unfilled_gen.c
+
+both of these include another .c file which we *don't* want to compile
+(because its merely included). Because we're using $(wildcard) in the
+Makefile we need to prevent those included files from being build by
+tagging them as .notinclued
+
+So after updating you will need to edit those two files and add
+.notincluded to the names of the .c files they include.
+** Yacc and lex files
+
+Since we use the generated files directly we don't need the yacc and
+lex files. But just in case (the yacc or flex templates don't match) I
+added them in with .notincluded
+
+Unforutunately, our build system somehow finds them and tries to call
+bison and flex on them if you leave them as .y and .l files.
+
+** Compiler/Linker flags
+
+When using newer versions of llvm (> 3.1) it may be necessary to tell the
+C++ compiler not to use RTTI (because LLVM appears to have been compiled
+that way). You know that's happening when some vtables or typeinfo structs
+are reported as missing when linking as a DSO.
+
+Currently these flags work for clang and g++:
+
+#+BEGIN_EXAMPLE
+    CXXFLAGS = -fno-exceptions -fno-rtti
+#+END_EXAMPLE
+
+In addition there are a few new LLVM libraries in the 3.X versions which we
+need to link to. See the Makefiles for that.
+
+* UPDATING OUR TREE
+
+The python script update_source.py in this directory can be executed
+from this directory on linux or mac to update the source tree from
+mesa's git repo.
+
+In order to use this you need to check out mesa's repo at the same
+level as the tweak repo. So if you have ~/git/tweak you sould check it
+out at ~/git/mesa.
+
+* COMPILING IN OUR TREE
+** Mesa links directly against GCC .o files but we don't
+
+Mesa uses a lot of GCC hackery when it compiles.  The goal is to use our
+flags where possible.
+
+I think it links directly against GCC .o files in order to portable across
+linux distros. I've seen something like it before, but don't really get
+it. For example libOSMesa links against these object files in their build:
+
+#+BEGIN_EXAMPLE
+ /usr/lib/gcc/x86_64-linux-gnu/4.6/../../../x86_64-linux-gnu/crti.o 
+ /usr/lib/gcc/x86_64-linux-gnu/4.6/crtbeginS.o 
+#+END_EXAMPLE
+
+In our tree it does not link against those. (Could this have something to
+do with x86-64 asm too?)
+
+** ASM is turned OFF in our tree
+
+They have a few .S (assembly) files in there which need special
+hanlding. Having completely figured it out yet. I turned off the use of
+assembly code in our makefiles to avoid the issue.
+
+This is controlled by the USE_X86_64_ASM define which is currently
+commented out in Makefile.common along with SFILES
+
+** Shared objects
+
+Ideally we'd build one giant lib (.a) file since we don't want to take
+advantage of mesa's ability to have multiple drivers. This would resolve a
+lot of headaches we're going to have on windows with .dll crap. However, it
+may not be possible to do this on windows because of the way windows
+handles the GL API. 
