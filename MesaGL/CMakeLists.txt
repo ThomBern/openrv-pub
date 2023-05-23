@@ -102,7 +102,7 @@ set(_llvmPipeC ${_galliumDriversLlvmPipeC})
 FILE(GLOB _mesaProgramCxx mesa/program/*.cpp)
 FILE(GLOB _mesaMainCxx mesa/main/*.cpp)
 FILE(GLOB _mesaStateTrackerCxx mesa/state_tracker/*.cpp)
-FILE(GLOB _glslCxx glsl/*.cpp))
+FILE(GLOB _glslCxx glsl/*.cpp)
 
 set(_libMesaGalliumCxx
   ${_mesaProgramCxx}
@@ -135,7 +135,7 @@ LIST(
 
   # CXX libraries
   ${_libMesaGalliumCxx}
-  ${_libGalliumCxx}
+  ${_galliumAuxGallivmCxx}
 )
 
 ADD_LIBRARY(
