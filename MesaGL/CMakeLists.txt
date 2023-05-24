@@ -200,6 +200,7 @@ TARGET_INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}/egl/main
 
   /usr/local/include
+  /usr/include
 )
 
 IF(RV_TARGET_LINUX)
@@ -209,6 +210,8 @@ IF(RV_TARGET_LINUX)
   FIND_PACKAGE(Threads REQUIRED)
   FIND_PACKAGE(LLVM REQUIRED)
 
+  ADD_DEFINITIONS(${LLVM_DEFINITIONS})
+
   message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
   message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
   message(STATUS "DEFINITIONS ${LLVM_DEFINITIONS}")
@@ -217,7 +220,7 @@ IF(RV_TARGET_LINUX)
   
   TARGET_LINK_LIBRARIES(
     ${_target}
-    PUBLIC Threads::Threads LLVM::LLVM rt dl m c
+    PUBLIC Threads::Threads LLVM rt dl m c
   )
 ENDIF()
 
