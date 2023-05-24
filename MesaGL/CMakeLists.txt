@@ -211,10 +211,13 @@ IF(RV_TARGET_LINUX)
 
   message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
   message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-
+  message(STATUS "DEFINITIONS ${LLVM_DEFINITIONS}")
+  message(STATUS "INCLUDE DIRS ${LLVM_INCLUDE_DIRS}")
+  
+  
   TARGET_LINK_LIBRARIES(
     ${_target}
-    PUBLIC Threads::Threads LLVM rt dl m c
+    PUBLIC Threads::Threads LLVM::LLVM rt dl m c
   )
 ENDIF()
 
