@@ -198,6 +198,8 @@ TARGET_INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}/gallium/state_trackers/egl
   ${CMAKE_CURRENT_SOURCE_DIR}/gallium/drivers
   ${CMAKE_CURRENT_SOURCE_DIR}/egl/main
+
+  /usr/local/include
 )
 
 IF(RV_TARGET_LINUX)
@@ -205,9 +207,14 @@ IF(RV_TARGET_LINUX)
       TRUE
   )
   FIND_PACKAGE(Threads REQUIRED)
+  FIND_PACKAGE(LLVM REQUIRED)
+
+  message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+  message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
   TARGET_LINK_LIBRARIES(
     ${_target}
-    PUBLIC Threads::Threads rt dl m c
+    PUBLIC Threads::Threads LLVM rt dl m c
   )
 ENDIF()
 
