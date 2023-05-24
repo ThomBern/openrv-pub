@@ -46,6 +46,44 @@
  */
 #define LP_MAX_FUNC_ARGS 32
 
+typedef enum {
+    LLVMZExtAttribute       = 1<<0,
+    LLVMSExtAttribute       = 1<<1,
+    LLVMNoReturnAttribute   = 1<<2,
+    LLVMInRegAttribute      = 1<<3,
+    LLVMStructRetAttribute  = 1<<4,
+    LLVMNoUnwindAttribute   = 1<<5,
+    LLVMNoAliasAttribute    = 1<<6,
+    LLVMByValAttribute      = 1<<7,
+    LLVMNestAttribute       = 1<<8,
+    LLVMReadNoneAttribute   = 1<<9,
+    LLVMReadOnlyAttribute   = 1<<10,
+    LLVMNoInlineAttribute   = 1<<11,
+    LLVMAlwaysInlineAttribute    = 1<<12,
+    LLVMOptimizeForSizeAttribute = 1<<13,
+    LLVMStackProtectAttribute    = 1<<14,
+    LLVMStackProtectReqAttribute = 1<<15,
+    LLVMAlignment = 31<<16,
+    LLVMNoCaptureAttribute  = 1<<21,
+    LLVMNoRedZoneAttribute  = 1<<22,
+    LLVMNoImplicitFloatAttribute = 1<<23,
+    LLVMNakedAttribute      = 1<<24,
+    LLVMInlineHintAttribute = 1<<25,
+    LLVMStackAlignment = 7<<26,
+    LLVMReturnsTwice = 1 << 29,
+    LLVMUWTable = 1 << 30,
+    LLVMNonLazyBind = 1 << 31
+
+    /* FIXME: These attributes are currently not included in the C API as
+       a temporary measure until the API/ABI impact to the C API is understood
+       and the path forward agreed upon.
+    LLVMAddressSafety = 1ULL << 32,
+    LLVMStackProtectStrongAttribute = 1ULL<<33,
+    LLVMCold = 1ULL << 34,
+    LLVMOptimizeNone = 1ULL << 35
+    */
+} LLVMAttribute;
+
 
 LLVMValueRef
 lp_declare_intrinsic(LLVMModuleRef module,
