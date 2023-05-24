@@ -56,7 +56,7 @@
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #if HAVE_LLVM >= 0x0301
 #include <llvm/ADT/Triple.h>
-//#include <llvm/ExecutionEngine/JITMemoryManager.h>
+#include <llvm/ExecutionEngine/JITMemoryManager.h>
 #endif
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/PrettyStackTrace.h>
