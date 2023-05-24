@@ -65,6 +65,12 @@ set(_libGalliumC
   ${_galliumAuxVlC}
 )
 
+# # WS Null C Files
+
+# FILE(GLOB _galliumWinsysSwNullC gallium/winsys/sw/null/*.c)
+
+# set(_libWsNullC ${_galliumWinsysSwNullC})
+
 # Trace C Files
 
 FILE(GLOB _galliumDriversTraceC gallium/drivers/trace/*.c)
@@ -124,16 +130,17 @@ LIST(
   # C libraries
   ${_libMesaGalliumC}
   ${_libGalliumC}
+  # ${_libWsNullC}
   ${_libTraceC}
   ${_libSoftpipeC}
   ${_libOsMesaC}
   ${_libGlApi}
   ${_llvmPipeC}
-  gallium/targets/osmesa/target.c
+  # gallium/targets/osmesa/target.c
 
   # CXX libraries
   ${_libMesaGalliumCxx}
-  ${_galliumAuxGallivmCxx}
+  ${_libGalliumCxx}
 )
 
 ADD_LIBRARY(
@@ -154,6 +161,8 @@ TARGET_INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}/gallium/include/pipe
   ${CMAKE_CURRENT_SOURCE_DIR}/gallium/auxiliary
   ${CMAKE_CURRENT_SOURCE_DIR}/gallium/state_trackers/egl
+  # ${CMAKE_CURRENT_SOURCE_DIR}/gallium/winsys/sw
+  # ${CMAKE_CURRENT_SOURCE_DIR}/gallium/winsys
   ${CMAKE_CURRENT_SOURCE_DIR}/gallium/drivers
   ${CMAKE_CURRENT_SOURCE_DIR}/egl/main
 
