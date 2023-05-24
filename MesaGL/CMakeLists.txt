@@ -136,8 +136,14 @@ LIST(
   ${_galliumAuxGallivmCxx}
 )
 
+ADD_LIBRARY(
+  ${_target} STATIC
+  ${_sources}
+)
+
 TARGET_COMPILE_OPTIONS(
   ${_target}
+  PRIVATE
 	PACKAGE_NAME="Mesa"	
 	PACKAGE_TARNAME="mesa"	
 	PACKAGE_VERSION=\"10.1.1\"
@@ -175,11 +181,6 @@ TARGET_COMPILE_OPTIONS(
 	GALLIUM_SOFTPIPE=1	
 	GALLIUM_TRACE=1		
 	FEATURE_GL=1
-)
-
-ADD_LIBRARY(
-  ${_target} STATIC
-  ${_sources}
 )
 
 TARGET_INCLUDE_DIRECTORIES(
